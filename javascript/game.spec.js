@@ -6,10 +6,12 @@ describe("The test environment", function() {
   });
 
   it("should access game", function() {
+  	// console.log(Game);
     expect(Game).toBeDefined();
   });
 });
 
 describe("Your specs...", function() {
+	// run with App().start()
   // it ...
 });

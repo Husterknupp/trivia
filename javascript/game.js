@@ -170,7 +170,11 @@ exports.Game = function() {
   };
 };
 
-exports.App = function() {
+exports.App = function(ngRollFunc) {
+  var getRandomNumber = ngRollFunc || function() {
+    return Math.random();
+  };
+
   return {
     start: function() {
       var notAWinner = false;
@@ -182,10 +186,10 @@ exports.App = function() {
       game.add('Sue');
 
       do {
+        game.roll(Math.floor(getRandomNumber() * 6) + 1);
 
-        game.roll(Math.floor(Math.random() * 6) + 1);
-
-        if (Math.floor(Math.random() * 10) == 7) {
+// what happens here?
+        if (Math.floor(getRandomNumber() * 10) == 7) {
           notAWinner = game.wrongAnswer();
         } else {
           notAWinner = game.wasCorrectlyAnswered();

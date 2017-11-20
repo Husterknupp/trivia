@@ -11,7 +11,11 @@ describe("The test environment", function() {
 	});
 });
 
-describe("Your specs...", function() {
-	// run with App().start()
-	// it ...
+describe("App", function() {
+	// todo make outcome automatically comparable
+	it("should do the same output given the same random numbers", function() {
+		App(function() {
+			return 0.234;
+		}).start();
+	});
 });

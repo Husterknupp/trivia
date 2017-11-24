@@ -12,6 +12,7 @@ describe("The app", function() {
 		App(function() {
 			return 0.234;
 		}, function(text) {
+			// console.log(text)
 			gameOutPut += text + '\n';
 		}).start();
 		// if comparison fails search in log statement for 'to equal'

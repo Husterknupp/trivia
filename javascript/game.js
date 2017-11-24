@@ -4,6 +4,7 @@ exports = typeof window !== "undefined" && window !== null ? window : global;
 // todo what is this notAWinner = game.wrongAnswer(); at the bottom?
 // todo reusable + testable + maintainable + understandable
 // few side effects, only in central places
+// todo player, places, purses, inPenaltyBox should be one model
 exports.Game = function(log) {
   var players = new Array();
   var places = new Array(6);
@@ -22,6 +23,7 @@ exports.Game = function(log) {
     return !(purses[currentPlayer] == 6)
   };
 
+// todo switch case?
   var currentCategory = function() {
     if (places[currentPlayer] == 0)
       return 'Pop';
@@ -59,7 +61,7 @@ exports.Game = function(log) {
     return howManyPlayers >= 2;
   };
 
-  this.add = function(playerName) {
+  this.addPlayer = function(playerName) {
     players.push(playerName);
     places[this.howManyPlayers() - 1] = 0;
     purses[this.howManyPlayers() - 1] = 0;
@@ -75,7 +77,7 @@ exports.Game = function(log) {
     return players.length;
   };
 
-
+// todo switch case?
   var askQuestion = function() {
     if (currentCategory() == 'Pop')
       log(popQuestions.shift());
@@ -87,6 +89,7 @@ exports.Game = function(log) {
       log(rockQuestions.shift());
   };
 
+// todo break into sub methods
   this.roll = function(roll) {
     log(players[currentPlayer] + " is the current player");
     log("They have rolled a " + roll);
@@ -121,6 +124,7 @@ exports.Game = function(log) {
     }
   };
 
+// todo break into sub methods
   this.wasCorrectlyAnswered = function() {
     if (inPenaltyBox[currentPlayer]) {
       if (isGettingOutOfPenaltyBox) {
@@ -162,7 +166,7 @@ exports.Game = function(log) {
     }
   };
 
-  this.wrongAnswer = function() {
+  this.sendCurrentPlayerToPenaltyBox = function() {
     log('Question was incorrectly answered');
     log(players[currentPlayer] + " was sent to the penalty box");
     inPenaltyBox[currentPlayer] = true;
@@ -188,16 +192,24 @@ exports.App = function(ngRollFunc, logFunc) {
 
       var game = new Game(log);
 
-      game.add('Chet');
-      game.add('Pat');
-      game.add('Sue');
+      game.addPlayer('Chet');
+      game.addPlayer('Pat');
+      game.addPlayer('Sue');
 
+// while (!game.isOver()) {
+//  forEach (player in players) {
+//    game.move(player)
+//    if (!game.isOver()) {
+//      break;
+//    }
+//  }
+// }
       do {
         game.roll(Math.floor(getRandomNumber() * 6) + 1);
 
 // what happens here?
         if (Math.floor(getRandomNumber() * 10) == 7) {
-          notAWinner = game.wrongAnswer();
+          notAWinner = game.sendCurrentPlayerToPenaltyBox();
         } else {
           notAWinner = game.wasCorrectlyAnswered();
         }

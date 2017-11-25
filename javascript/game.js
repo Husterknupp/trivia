@@ -14,16 +14,22 @@ function Player(playerName) {
 exports.Game = function(log) {
     var players = [];
 
-    var popQuestions = [];
-    var scienceQuestions = [];
-    var sportsQuestions = [];
-    var rockQuestions = [];
+    var popQuestions = generate50Quesions("Pop Question");
+    var scienceQuestions = generate50Quesions("Science Question");
+    var sportsQuestions = generate50Quesions("Sports Question");
+    var rockQuestions = generate50Quesions("Rock Question");
+    function generate50Quesions(questionType) {
+        var result = [];
+        for (var i = 0; i < 50; i++) {
+            result.push(questionType + " " + i);
+        }
+    }
 
     var currentPlayer = 0;
     var isGettingOutOfPenaltyBox = false; // todo baaaaad state everywhere!
 
     var didPlayerWin = function() {
-        return !(players[currentPlayer].purses === 6)
+        return players[currentPlayer].purses !== 6;
     };
 
     var currentCategory = function() {
@@ -48,21 +54,6 @@ exports.Game = function(log) {
         }
     };
 
-    this.createRockQuestion = function(index) {
-        return "Rock Question " + index;
-    };
-
-    for (var i = 0; i < 50; i++) {
-        popQuestions.push("Pop Question " + i);
-        scienceQuestions.push("Science Question " + i);
-        sportsQuestions.push("Sports Question " + i);
-        rockQuestions.push(this.createRockQuestion(i));
-    }
-
-    this.isPlayable = function(howManyPlayers) {
-        return howManyPlayers >= 2;
-    };
-
     this.addPlayer = function(playerName) {
         var newPlayer = new Player(playerName);
         players.push(newPlayer);
@@ -73,10 +64,7 @@ exports.Game = function(log) {
         return newPlayer;
     };
 
-    this.howManyPlayers = function() {
-        return players.length;
-    };
-
+    // todo questionService.askNextQuestion(player.place): void
     var askQuestion = function() {
         switch (currentCategory()) {
             case 'Pop':
@@ -96,8 +84,16 @@ exports.Game = function(log) {
 
 // todo break into sub methods
     this.roll = function(roll) {
+        function roll_moveForwardAndConsiderMaxGameFields(currentPosition) {
+            currentPosition += roll;
+            if (currentPosition > 11) {
+                currentPosition -= 12;
+            }
+            return currentPosition;
+        }
         var player = players[currentPlayer];
         log(player.name + " is the current player");
+
         log("They have rolled a " + roll);
 
         if (player.inPenaltyBox) {
@@ -108,10 +104,7 @@ exports.Game = function(log) {
                 log(player.name + " is getting out of the penalty box");
 
                 // todo extract into method and reuse
-                player.places = player.places + roll;
-                if (player.places > 11) {
-                    player.places = player.places - 12;
-                }
+                player.places = roll_moveForwardAndConsiderMaxGameFields(player.places);
 
                 log(player.name + "'s new location is " + player.places);
                 log("The category is " + currentCategory());
@@ -122,10 +115,7 @@ exports.Game = function(log) {
             }
         } else {
 
-            player.places = player.places + roll;
-            if (player.places > 11) {
-                player.places = player.places - 12;
-            }
+            player.places = roll_moveForwardAndConsiderMaxGameFields(player.places);
 
             log(player.name + "'s new location is " + player.places);
             log("The category is " + currentCategory());
@@ -135,24 +125,26 @@ exports.Game = function(log) {
 
 // todo break into sub methods
     this.wasCorrectlyAnswered = function() {
+        function wasCorrectlyAnswered_nextPlayersTurn() {
+            currentPlayer += 1;
+            if (currentPlayer === players.length)
+                currentPlayer = 0;
+        }
+
         var player = players[currentPlayer];
+
         if (player.inPenaltyBox) {
             if (isGettingOutOfPenaltyBox) {
                 log('Answer was correct!!!!');
                 player.purses += 1;
                 log(player.name + " now has " + player.purses + " Gold Coins.");
 
-                var winner = didPlayerWin();
-                // todo extract method
-                currentPlayer += 1;
-                if (currentPlayer === players.length)
-                    currentPlayer = 0;
+                var isWinner = didPlayerWin();
+                wasCorrectlyAnswered_nextPlayersTurn();
 
-                return winner;
+                return isWinner;
             } else {
-                currentPlayer += 1;
-                if (currentPlayer === players.length)
-                    currentPlayer = 0;
+                wasCorrectlyAnswered_nextPlayersTurn();
                 return true;
             }
         } else {
@@ -162,10 +154,7 @@ exports.Game = function(log) {
 
             var winner = didPlayerWin();
 
-            currentPlayer += 1;
-            if (currentPlayer === players.length)
-                currentPlayer = 0;
-
+            wasCorrectlyAnswered_nextPlayersTurn();
             return winner;
         }
     };
@@ -212,7 +201,7 @@ exports.App = function(ngRollFunc, logFunc) {
             do {
                 game.roll(Math.floor(getRandomNumber() * 6) + 1);
 
-// what happens here?
+                // todo what happens here?
                 if (Math.floor(getRandomNumber() * 10) === 7) {
                     notAWinner = game.sendCurrentPlayerToPenaltyBox();
                 } else {

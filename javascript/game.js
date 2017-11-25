@@ -23,6 +23,7 @@ exports.Game = function(log) {
         for (var i = 0; i < 50; i++) {
             result.push(questionType + " " + i);
         }
+        return result;
     }
 
     var currentPlayer = 0;

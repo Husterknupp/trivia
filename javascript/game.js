@@ -4,7 +4,9 @@ function Player(playerName) {
     this.name = playerName;
     this.places = 0;
     this.purses = 0;
+    // todo consolidate both penalty props
     this.inPenaltyBox = false;
+    isGettingOutOfPenaltyBox = false;
 }
 
 // todo reduce state (currentPlayer,..?)
@@ -27,7 +29,6 @@ exports.Game = function(log) {
     }
 
     var currentPlayer = 0;
-    var isGettingOutOfPenaltyBox = false; // todo baaaaad state everywhere!
 
     var didPlayerWin = function() {
         return players[currentPlayer].purses !== 6;
@@ -65,24 +66,6 @@ exports.Game = function(log) {
         return newPlayer;
     };
 
-    // todo questionService.askNextQuestion(player.place): void
-    var askQuestion = function() {
-        switch (currentCategory()) {
-            case 'Pop':
-                log(popQuestions.shift());
-                break;
-            case 'Science':
-                log(scienceQuestions.shift());
-                break;
-            case 'Sports':
-                log(sportsQuestions.shift());
-                break;
-            case 'Rock':
-                log(rockQuestions.shift());
-                break;
-        }
-    };
-
 // todo break into sub methods
     this.roll = function(roll) {
         function roll_moveForwardAndConsiderMaxGameFields(currentPosition) {
@@ -92,36 +75,44 @@ exports.Game = function(log) {
             }
             return currentPosition;
         }
-        var player = players[currentPlayer];
-        log(player.name + " is the current player");
-
-        log("They have rolled a " + roll);
-
-        if (player.inPenaltyBox) {
-            // GO OUT OF PENALTY BOX + MOVE
-            if (roll % 2 !== 0) {
-                isGettingOutOfPenaltyBox = true;
-
-                log(player.name + " is getting out of the penalty box");
-
-                // todo extract into method and reuse
+        // todo questionService.askNextQuestion(player.place): void
+        function roll_askQuestion() {
+            switch (currentCategory()) {
+                case 'Pop':
+                    log(popQuestions.shift());
+                    break;
+                case 'Science':
+                    log(scienceQuestions.shift());
+                    break;
+                case 'Sports':
+                    log(sportsQuestions.shift());
+                    break;
+                case 'Rock':
+                    log(rockQuestions.shift());
+                    break;
+            }
+        }
+        function roll_moveIfProperlyRolled(player, roll) {
+            if (player.inPenaltyBox && roll % 2 === 0) {
+                log(player.name + " is not getting out of the penalty box");
+                player.isGettingOutOfPenaltyBox = false;
+            } else {
+                if (roll % 2 !== 0) {
+                    player.isGettingOutOfPenaltyBox = true;
+                    log(player.name + " is getting out of the penalty box");
+                }
                 player.places = roll_moveForwardAndConsiderMaxGameFields(player.places);
-
                 log(player.name + "'s new location is " + player.places);
                 log("The category is " + currentCategory());
-                askQuestion();
-            } else {
-                log(player.name + " is not getting out of the penalty box");
-                isGettingOutOfPenaltyBox = false;
+                roll_askQuestion();
             }
-        } else {
-
-            player.places = roll_moveForwardAndConsiderMaxGameFields(player.places);
-
-            log(player.name + "'s new location is " + player.places);
-            log("The category is " + currentCategory());
-            askQuestion();
         }
+
+        var player = players[currentPlayer];
+        log(player.name + " is the current player");
+        log("They have rolled a " + roll);
+
+        roll_moveIfProperlyRolled(player, roll);
     };
 
 // todo break into sub methods
@@ -135,7 +126,7 @@ exports.Game = function(log) {
         var player = players[currentPlayer];
 
         if (player.inPenaltyBox) {
-            if (isGettingOutOfPenaltyBox) {
+            if (player.isGettingOutOfPenaltyBox) {
                 log('Answer was correct!!!!');
                 player.purses += 1;
                 log(player.name + " now has " + player.purses + " Gold Coins.");
